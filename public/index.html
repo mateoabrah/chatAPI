@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ChatAPI - Una plataforma de chat moderna</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  <!-- Estilos personalizados -->
+  <style>
+    body {
+      background-color: #f5f7fb;
+      height: 100vh;
+      overflow: hidden;
+    }
+    /* Estilos para la pantalla de inicio */
+    .login-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #6e45e2, #88d3ce);
+      z-index: 1000;
+      transition: opacity 0.5s, transform 0.5s;
+    }
+    .login-box {
+      background: white;
+      padding: 2rem;
+      border-radius: 1rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      width: 90%;
+      max-width: 500px;
+      text-align: center;
+      animation: fadeIn 0.5s ease-out;
+    }
+    .app-logo {
+      margin-bottom: 2rem;
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: #6e45e2;
+    }
+    .login-box .form-control {
+      font-size: 1.2rem;
+      padding: 0.8rem;
+      margin-bottom: 1.5rem;
+      border-radius: 0.5rem;
+    }
+    .login-box .btn {
+      font-size: 1.2rem;
+      padding: 0.8rem 1.5rem;
+      border-radius: 0.5rem;
+    }
+    .hidden {
+      opacity: 0;
+      transform: translateY(-20px);
+      pointer-events: none;
+    }
+    
+    /* Ajustes para el botón de ingresar - SIEMPRE vertical */
+    .login-input-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 1.5rem;
+    }
+    
+    .login-input-container .form-control {
+      border-radius: 0.5rem;
+      margin-bottom: 0;
+      width: 100%;
+    }
+    
+    .login-input-container .btn {
+      border-radius: 0.5rem;
+      width: 100%;
+    }
+    
+    /* Selector de emojis */
+    .emoji-selector {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 1.5rem;
+      max-height: 150px;
+      overflow-y: auto;
+      padding: 10px;
+      background-color: #f8f9fa;
+      border-radius: 0.5rem;
+      border: 1px solid #dee2e6;
+    }
+    
+    .emoji-option {
+      cursor: pointer;
+      font-size: 1.8rem;
+      width: 50px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: all 0.2s;
+      border: 2px solid transparent;
+      background-color: white;
+    }
+    
+    .emoji-option:hover {
+      background-color: #e9ecef;
+      transform: scale(1.1);
+    }
+    
+    .emoji-option.selected {
+      border-color: #6e45e2;
+      background-color: #e9d5ff;
+    }
+    
+    .emoji-label {
+      font-size: 0.9rem;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: #6c757d;
+    }
+    
+    .selected-emoji {
+      font-size: 1.2rem;
+      margin-right: 0.5rem;
+    }
+    
+    /* Estilos para la interfaz del chat */
+    .chat-container {
+      max-width: 1200px;
+      height: 100vh;
+      background-color: white;
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+      visibility: hidden;
+      opacity: 0;
+      transition: opacity 0.5s;
+    }
+    .chat-visible {
+      visibility: visible;
+      opacity: 1;
+    }
+    .chat-header {
+      background: linear-gradient(135deg, #6e45e2, #88d3ce);
+      color: white;
+    }
+    .chat-messages {
+      height: calc(100vh - 180px);
+      overflow-y: auto;
+      padding: 1rem;
+      background-color: #f8f9fa;
+    }
+    .message {
+      margin-bottom: 1rem;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+    .message-content {
+      padding: 0.75rem 1rem;
+      border-radius: 1rem;
+      max-width: 80%;
+      word-break: break-word;
+    }
+    .message-user {
+      background-color: #e9f3ff;
+      border: 1px solid #d1e7ff;
+      align-self: flex-start;
+      border-bottom-left-radius: 0.25rem;
+    }
+    .message-system {
+      background-color: #f0f0f0;
+      border: 1px solid #e0e0e0;
+      border-radius: 1rem;
+      text-align: center;
+    }
+    .message-special {
+      background-color: #fff3cd;
+      border: 1px solid #ffeeba;
+      width: 100%;
+    }
+    .message-received {
+      background-color: #d1ffd1;
+      border: 1px solid #c3edc3;
+      align-self: flex-end;
+      border-bottom-right-radius: 0.25rem;
+    }
+    .message-meta {
+      font-size: 0.8rem;
+      color: #6c757d;
+      margin-bottom: 0.25rem;
+    }
+    .command-btn {
+      transition: transform 0.2s;
+    }
+    .command-btn:hover {
+      transform: translateY(-2px);
+    }
+    .chat-input {
+      background-color: #f8f9fa;
+      border-top: 1px solid #e9ecef;
+      padding: 1rem;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .user-info {
+      background-color: rgba(255,255,255,0.8);
+      border-radius: 0.5rem;
+      position: relative;
+    }
+    /* Estilos para diferentes tipos de mensajes */
+    .joke-message { background-color: #ffe8d6; }
+    .quote-message { background-color: #d8e2dc; }
+    .activity-message { background-color: #cddafd; }
+    .cat-message { background-color: #ffd6ff; }
+    
+    /* Estilos para imágenes en los mensajes */
+    .message img {
+      max-width: 100%;
+      border-radius: 0.5rem;
+      margin-top: 0.5rem;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    /* Estilos para el juego de piedra, papel o tijera */
+    .game-controls {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+    }
+    
+    .game-btn {
+      transition: all 0.2s ease;
+      border: 2px solid #e0e0e0;
+    }
+    
+    .game-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    .game-btn.disabled {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+    
+    .game-result {
+      background-color: #f8f9fa;
+      border-radius: 10px;
+      padding: 15px;
+      text-align: center;
+    }
+    
+    .match-result {
+      display: flex; 
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 10px;
+    }
+    
+    .player-choice {
+      font-size: 1.1rem;
+      font-weight: bold;
+    }
+    
+    .vs {
+      font-size: 1rem;
+      font-weight: bold;
+      color: #6c757d;
+    }
+    
+    /* Modo oscuro (opcional) */
+    @media (prefers-color-scheme: dark) {
+      body.dark-mode {
+        background-color: #121212;
+      }
+      .dark-mode .chat-container {
+        background-color: #1f1f1f;
+      }
+      .dark-mode .chat-messages {
+        background-color: #121212;
+      }
+      .dark-mode .message-meta {
+        color: #adb5bd;
+      }
+      .dark-mode .chat-input {
+        background-color: #1f1f1f;
+        border-color: #2a2a2a;
+      }
+    }
+    /* Estilos para el campo de usuario obligatorio */
+    .username-required {
+      position: absolute;
+      top: -20px;
+      left: 30px;
+      font-size: 0.8rem;
+      color: #dc3545;
+      background-color: rgba(255,255,255,0.9);
+      padding: 2px 8px;
+      border-radius: 4px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+    .is-valid ~ .username-required {
+      opacity: 0;
+    }
+  </style>
+</head>
+<body>
+  <!-- Pantalla de inicio -->
+  <div id="loginScreen" class="login-screen">
+    <div class="login-box">
+      <div class="app-logo">
+        <i class="bi bi-chat-dots-fill me-2"></i> ChatAPI
+      </div>
+      <div class="mb-4">
+        Ingresa tu nombre para comenzar a chatear
+      </div>
+      <div class="login-input-container">
+        <input type="text" id="loginUsername" class="form-control" placeholder="Tu nombre" minlength="2" required>
+        <input type="hidden" id="userEmoji" value="😊">
+      </div>
+      
+      <div class="emoji-label">Elige un emoji para tu perfil:</div>
+      <div class="emoji-selector">
+        <div class="emoji-option selected" data-emoji="😊">😊</div>
+        <div class="emoji-option" data-emoji="😎">😎</div>
+        <div class="emoji-option" data-emoji="🤩">🤩</div>
+        <div class="emoji-option" data-emoji="😄">😄</div>
+        <div class="emoji-option" data-emoji="🤔">🤔</div>
+        <div class="emoji-option" data-emoji="😂">😂</div>
+        <div class="emoji-option" data-emoji="🥳">🥳</div>
+        <div class="emoji-option" data-emoji="😇">😇</div>
+        <div class="emoji-option" data-emoji="🦸">🦸</div>
+        <div class="emoji-option" data-emoji="🦄">🦄</div>
+        <div class="emoji-option" data-emoji="🐱">🐱</div>
+        <div class="emoji-option" data-emoji="🐶">🐶</div>
+        <div class="emoji-option" data-emoji="🦊">🦊</div>
+        <div class="emoji-option" data-emoji="🐼">🐼</div>
+        <div class="emoji-option" data-emoji="🦁">🦁</div>
+        <div class="emoji-option" data-emoji="🐯">🐯</div>
+        <div class="emoji-option" data-emoji="🦉">🦉</div>
+        <div class="emoji-option" data-emoji="🐢">🐢</div>
+        <div class="emoji-option" data-emoji="🦈">🦈</div>
+        <div class="emoji-option" data-emoji="🐬">🐬</div>
+      </div>
+      
+      <button id="enterChatBtn" class="btn btn-primary w-100">
+        <i class="bi bi-box-arrow-in-right me-2"></i> Ingresar
+      </button>
+      
+      <div id="loginError" class="text-danger d-none mt-3">
+        Por favor ingresa un nombre válido (mínimo 2 caracteres)
+      </div>
+    </div>
+  </div>
+
+  <!-- Interfaz principal del chat -->
+  <div class="container-fluid h-100 p-0">
+    <div id="chatInterface" class="chat-container mx-auto d-flex flex-column h-100">
+      <!-- Encabezado del Chat -->
+      <div class="chat-header p-3 d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-chat-dots-fill fs-3 me-2"></i>
+          <h2 class="mb-0">ChatAPI</h2>
+        </div>
+        <!-- Información del usuario -->
+        <div class="user-info p-2 d-flex align-items-center">
+          <span id="userEmojiDisplay" class="selected-emoji">😊</span>
+          <span id="username" class="fw-bold text-dark ms-1"></span>
+        </div>
+      </div>
+
+      <!-- Botones de Comandos -->
+      <div class="p-2 bg-white border-bottom d-flex flex-wrap gap-2 justify-content-center">
+        <button id="jokeBtn" class="btn btn-warning command-btn">
+          <i class="bi bi-emoji-laughing-fill me-1"></i> Chiste
+        </button>
+        <button id="quoteBtn" class="btn btn-info command-btn text-white">
+          <i class="bi bi-chat-quote-fill me-1"></i> Cita
+        </button>
+        <button id="activityBtn" class="btn btn-purple command-btn" style="background-color: #9c27b0; color: white;">
+          <i class="bi bi-lightning-fill me-1"></i> Actividad
+        </button>
+        <button id="catBtn" class="btn btn-pink command-btn" style="background-color: #e91e63; color: white;">
+          <i class="bi bi-emoji-smile-fill me-1"></i> Gato GIF
+        </button>
+        <button id="pptBtn" class="btn btn-success command-btn">
+          <i class="bi bi-controller me-1"></i> Piedra, Papel o Tijera
+        </button>
+      </div>
+
+      <!-- Área de Mensajes -->
+      <div id="chat" class="chat-messages overflow-auto flex-grow-1">
+      </div>
+
+      <!-- Área de Entrada -->
+      <div class="chat-input p-3">
+        <div class="input-group">
+            <input id="textInput" type="text" class="form-control" placeholder="Escribe tu mensaje aquí..." />
+          <button id="sendBtn" class="btn btn-primary">
+            <i class="bi bi-send-fill"></i> Enviar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS (opcional, solo si necesitas componentes interactivos) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Script del cliente -->
+  <script src="client.js"></script>
+</body>
+</html>
