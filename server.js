@@ -100,6 +100,13 @@ wss.on('connection', ws => {
       const emoji = msg.emoji || '😊'; // Extraer el emoji del mensaje o usar el predeterminado
       console.log(`Comando o mensaje recibido de ${emoji} ${user}: "${text}"`);
 
+      // Si no es un comando, enviar el mensaje a todos los clientes
+      if (!text.startsWith('/')) {
+        console.log('Mensaje normal recibido, distribuyendo a todos los usuarios');
+        broadcast(user, msg.text, emoji);
+        return; // Terminar el procesamiento para este mensaje
+      }
+
       // Comando /joke - Obtener un chiste
       if (text === '/joke') {
         console.log('Procesando comando /joke de', user);
