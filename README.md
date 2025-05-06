@@ -1,5 +1,8 @@
 # ChatAPI
 
+**Demo en vivo**:  
+[https://chatapi-mateo.up.railway.app/](https://chatapi-mateo.up.railway.app/)
+
 **ChatAPI** es una aplicación de chat en tiempo real desarrollada con *Node.js*, *Express* y *WebSocket*. Permite a múltiples usuarios conectarse, conversar y disfrutar de funcionalidades interactivas mediante una interfaz moderna e intuitiva.
 
 ---
